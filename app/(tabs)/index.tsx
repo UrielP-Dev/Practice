@@ -1,70 +1,95 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, Image, Button, Alert, Animated } from 'react-native'; 
+import { Audio } from 'expo-av';
 
 export default function HomeScreen() {
+  const [rotation, setRotation] = useState(new Animated.Value(0)); 
+  const [scale, setScale] = useState(new Animated.Value(1));
+  const [sound, setSound] = useState(null);
+
+  async function playSound() {
+    if (sound) {
+      await sound.unloadAsync();
+    }
+
+    console.log('Loading Sound');
+    const { sound: newSound } = await Audio.Sound.createAsync(
+      require('@/assets/pedro-pedro-pe.mp3')
+    );
+    setSound(newSound);
+
+    console.log('Playing Sound');
+    await newSound.playAsync();
+  }
+
+  const rotateImage = () => {
+    Animated.timing(rotation, {
+      toValue: 3, 
+      duration: 10000, 
+      useNativeDriver: true, // Optimización nativa
+    }).start(() => {
+      rotation.setValue(0); 
+    });
+  };
+  const scaleImage = () => {
+    scale.setValue(1);
+    Animated.timing(scale, {
+      toValue: 2,
+      duration: 10000,
+      useNativeDriver: true,
+    }).start(() => {
+      scale.setValue(1); 
+    });
+  };
+
+  const spin = rotation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
+    <View style={styles.titleContainer}>
+      <Text style={styles.titleText}>
+        Pedro Pedro pedro pe
+      </Text>
+      <Animated.Image
+        source={require('@/assets/images/Pedro.jpeg')} 
+        style={[styles.myImage, { transform: [{ rotate: spin }, { scale: scale }] }]} 
+      /> 
+      <View style={styles.pedroButon}>
+        <Button
+          color='brown' 
+          title="Press me for Pedro pedro..."
+          onPress={() => {
+            rotateImage();
+            scaleImage(); 
+            playSound();
+          }}
         />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      </View>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   titleContainer: {
-    flexDirection: 'row',
+    flexDirection: 'column', // Para que el texto y la imagen estén en columna
     alignItems: 'center',
-    gap: 8,
+    justifyContent: 'center',
+    marginTop: 20,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  titleText: {
+    fontSize: 50,  // Tamaño de fuente para el texto
+    fontWeight: 'bold',  // Estilo de texto en negrita
+    color: '#000',  // Color del texto (negro)
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  myImage: {
+    width: 200,  // Ancho de la imagen
+    height: 200, // Alto de la imagen
+    marginTop: 20,  // Espacio superior entre el texto y la imagen
+    borderRadius: 100, // Hace la imagen redonda (opcional)
   },
+  pedroButon: {
+    marginTop: 50, 
+  }
 });
